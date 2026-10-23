@@ -1,0 +1,10 @@
+.git
+.github
+dist
+.gocache
+docs
+*.md
+*.exe
+*.log
+coverage.txt
+.claude

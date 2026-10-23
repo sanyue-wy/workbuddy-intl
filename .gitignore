@@ -1,0 +1,18 @@
+# Binaries
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+workbuddy-intl.exe
+
+# Test and build artifacts
+.gocache/
+*.test
+.playwright-mcp/
+coverage.txt
+
+# Local logs
+*.log
+*.lock

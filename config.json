@@ -1,0 +1,39 @@
+{
+  "listen_addr": "127.0.0.1:8780",
+  "upstream_url": "https://api.anthropic.com",
+  "api_key": "",
+  "inbound_token": "",
+  "claude_code_version": "2.1.306",
+  "model_mapping": {
+    "claude-3-7-sonnet": "claude-3-7-sonnet-latest",
+    "claude-3-5-sonnet": "claude-3-5-sonnet-latest",
+    "claude-3-5-haiku": "claude-3-5-haiku-latest",
+    "claude-3-opus": "claude-3-opus-latest"
+  },
+  "log_level": "info",
+  "timeout_seconds": 180,
+  "max_body_mb": 32,
+  "enable_fingerprint": false,
+  "enable_pacing": false,
+  "rate_per_sec": 2.0,
+  "burst_capacity": 5,
+  "enable_jitter": false,
+  "jitter_median_ms": 300,
+  "jitter_p95_ms": 650,
+  "enable_circuit_breaker": true,
+  "enable_warmup": true,
+  "warmup_interval_seconds": 30,
+  "warmup_concurrency": 2,
+  "max_idle_conns": 200,
+  "max_idle_conns_per_host": 50,
+  "response_header_timeout": 60,
+  "buffer_size_kb": 32,
+  "workbuddy": {
+    "enabled": false,
+    "mode": "workbuddy",
+    "session_token": "",
+    "cookie": "",
+    "channel_id": "intl-desktop-v2",
+    "wrap_mode": "inject"
+  }
+}

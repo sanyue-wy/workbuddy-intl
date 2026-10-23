@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>WorkBuddy 国际版 · 控制台</title>
+<style>
+  :root{
+    --bg:#f4f2e9; --card:#fcfbf6; --ink:#3d4030; --muted:#8a8c7a;
+    --line:#e4e1d2; --olive:#6f7a3f; --olive-d:#58632f; --olive-soft:#eef0e2;
+    --green:#4c8a4a; --amber:#c6811f; --red:#b4463b; --chip:#eceadd;
+    --shadow:0 1px 2px rgba(60,64,48,.05),0 8px 24px rgba(60,64,48,.06);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:24px 20px 48px; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Noto Sans SC","Hiragino Sans GB",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1160px;margin:0 auto}
+  code,.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+
+  header{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+  .logo{width:46px;height:46px;border-radius:13px;background:var(--olive-soft);
+    border:1px solid var(--line);display:grid;place-items:center;color:var(--olive-d);font-size:24px}
+  .title h1{font-size:19px;margin:0;font-weight:700}
+  .title .ver{display:inline-block;margin-left:8px;font-size:11px;color:var(--olive-d);
+    background:var(--olive-soft);border:1px solid var(--line);border-radius:20px;padding:1px 9px;vertical-align:2px;font-weight:600}
+  .title p{margin:1px 0 0;color:var(--muted);font-size:12.5px}
+  .run{margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--olive-soft);
+    border:1px solid var(--line);color:var(--olive-d);padding:6px 13px;border-radius:22px;font-weight:600;font-size:12.5px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(76,138,74,.18)}
+  .dot.stale{background:var(--muted);box-shadow:none}
+
+  .tabs{display:flex;gap:8px;background:var(--card);border:1px solid var(--line);
+    border-radius:26px;padding:5px;margin-bottom:18px;box-shadow:var(--shadow);width:max-content;max-width:100%;flex-wrap:wrap}
+  .tab{border:0;background:transparent;color:var(--muted);font-size:13.5px;font-weight:600;
+    padding:8px 20px;border-radius:22px;cursor:pointer;transition:.15s;font-family:inherit}
+  .tab:hover{color:var(--ink)}
+  .tab.on{background:var(--olive);color:#fff;box-shadow:0 2px 8px rgba(111,122,63,.28)}
+
+  .grid{display:grid;gap:14px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:760px){.g3,.g2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+  .card h2{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:700}
+  .stat .n{font-size:30px;font-weight:700;letter-spacing:-.02em}
+  .stat .s{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .stat .n.err{color:var(--red)}
+
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .kv:last-child{border-bottom:0}
+  .kv .k{color:var(--muted)}
+  .kv .v{font-weight:600;text-align:right;word-break:break-all}
+  .pill{display:inline-block;padding:1px 9px;border-radius:20px;font-size:11.5px;font-weight:600;border:1px solid transparent}
+  .pill.ok{background:var(--olive-soft);color:var(--olive-d);border-color:var(--line)}
+  .pill.off{background:#f1eee3;color:var(--muted);border-color:var(--line)}
+  .pill.warn{background:#faf0dd;color:var(--amber)}
+  .pill.bad{background:#f7e3e0;color:var(--red)}
+
+  .bar{height:10px;border-radius:7px;background:#ebe8db;overflow:hidden;margin:7px 0 4px}
+  .bar>span{display:block;height:100%;background:var(--olive);border-radius:7px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tbody tr:last-child td{border-bottom:0}
+  .muted{color:var(--muted)}
+  .empty{color:var(--muted);text-align:center;padding:22px;font-size:13px}
+
+  .logbox{background:#2d2f24;border-radius:12px;padding:14px;max-height:460px;overflow:auto;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:12px;line-height:1.7;color:#d8d7c4}
+  .logbox .t{color:#8f9178;margin-right:8px}
+  .logbox .l{white-space:pre-wrap;word-break:break-all}
+
+  .copy{border:1px solid var(--line);background:var(--olive-soft);color:var(--olive-d);
+    border-radius:9px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .copy:active{transform:translateY(1px)}
+  .codeline{display:flex;align-items:center;gap:10px;background:#f1eee3;border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;margin-top:6px}
+  .codeline code{flex:1;font-size:12.5px;word-break:break-all}
+  .lbl{font-size:12px;color:var(--muted);margin-top:14px;font-weight:600}
+  .lbl:first-child{margin-top:0}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;
+    padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+  .btn:hover{background:var(--olive-soft);color:var(--olive-d)}
+  .btn.warn{background:#faf0dd;color:var(--amber);border-color:#ecd9b4}
+  .btn.warn:hover{background:#f5e2bf}
+  .btn.sm{padding:3px 10px;font-size:11.5px;border-radius:7px}
+  .panel{display:none}
+  .panel.on{display:block}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">⌘</div>
+    <div class="title">
+      <h1>WorkBuddy 国际版<span class="ver" id="ver">v…</span></h1>
+      <p>Anthropic / Claude 纯净反向代理 · 本地控制台</p>
+    </div>
+    <div class="run"><span class="dot" id="runDot"></span><span id="runTxt">运行中</span></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" data-p="overview">总览</button>
+    <button class="tab" data-p="models">模型与接入</button>
+    <button class="tab" data-p="stealth">流控与熔断</button>
+    <button class="tab" data-p="params">运行参数</button>
+    <button class="tab" data-p="logs">日志</button>
+  </div>
+
+  <!-- 总览 -->
+  <section class="panel on" id="p-overview">
+    <div class="grid g3" style="margin-bottom:14px">
+      <div class="card stat"><h2>累计请求</h2><div class="n" id="st-total">—</div><div class="s" id="st-bytes">—</div></div>
+      <div class="card stat"><h2>错误 / 成功率</h2><div class="n" id="st-err">—</div><div class="s" id="st-rate">—</div></div>
+      <div class="card stat"><h2>平均延迟</h2><div class="n" id="st-avg">—</div><div class="s">端到端往返（含排队）</div></div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h2>服务状态</h2>
+        <div class="kv"><span class="k">运行时长</span><span class="v" id="ov-uptime">—</span></div>
+        <div class="kv"><span class="k">监听地址</span><span class="v mono" id="ov-listen">—</span></div>
+        <div class="kv"><span class="k">上游端点</span><span class="v mono" id="ov-upstream">—</span></div>
+        <div class="kv"><span class="k">API Key</span><span class="v" id="ov-key">—</span></div>
+        <div class="kv"><span class="k">入站鉴权</span><span class="v" id="ov-token">—</span></div>
+        <div class="kv"><span class="k">连接预热</span><span class="v" id="ov-warm">—</span></div>
+      </div>
+      <div class="card">
+        <h2>各模型调用</h2>
+        <table><thead><tr><th>模型</th><th class="num">请求</th><th class="num">错误</th><th class="num">均延迟</th></tr></thead>
+        <tbody id="ov-models"><tr><td colspan="4" class="empty">暂无请求</td></tr></tbody></table>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>最近请求</h2>
+      <table><thead><tr><th>时间</th><th>端点</th><th>模型</th><th class="num">状态</th><th class="num">耗时</th></tr></thead>
+      <tbody id="ov-recent"><tr><td colspan="5" class="empty">暂无请求</td></tr></tbody></table>
+    </div>
+  </section>
+
+  <!-- 模型与接入 -->
+  <section class="panel" id="p-models">
+    <div class="card" style="margin-bottom:14px">
+      <h2>可用模型清单与在线连通性测试</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>模型标识 (Model ID)</th>
+            <th>显示名称</th>
+            <th class="num">操作 / 延迟测试</th>
+          </tr>
+        </thead>
+        <tbody id="mdl-list">
+          <tr><td colspan="3" class="empty">加载模型中…</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">点击“测试”按钮将向 <code>/v1/messages/count_tokens</code> 发送轻量探针，验证上游连通性与往返延迟。</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>客户端接入（ZCode / Claude Code / Cursor 等）</h2>
+        <div class="lbl">Base URL（协议选 Anthropic Messages）</div>
+        <div class="codeline"><code id="cc-base">http://127.0.0.1:8780</code><button class="copy" data-copy="cc-base">复制</button></div>
+        <div class="lbl">API Key（透传模式填客户端自己的 Key，或填写代理 Key）</div>
+        <div class="codeline"><code id="cc-key">local-proxy</code><button class="copy" data-copy="cc-key">复制</button></div>
+        <div class="lbl">官方 Claude Code CLI（Bash）</div>
+        <div class="codeline"><code id="cc-env">export ANTHROPIC_BASE_URL=…</code><button class="copy" data-copy="cc-env">复制</button></div>
+      </div>
+      <div class="card">
+        <h2>模型别名映射</h2>
+        <table><thead><tr><th>请求别名</th><th>重写为</th></tr></thead>
+        <tbody id="mdl-map"><tr><td colspan="2" class="empty">未配置映射，原样透传</td></tr></tbody></table>
+        <p class="muted" style="font-size:12px;margin:12px 0 0">请求体中的 <code>model</code> 命中左列时通过定点无整包解析替换重写为右列完整模型名；其余字节与顺序保持不变。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 流控与熔断 -->
+  <section class="panel" id="p-stealth">
+    <div class="grid g3" style="margin-bottom:14px">
+      <div class="card">
+        <h2>熔断器全局概要</h2>
+        <div style="font-size:22px;font-weight:700;margin-bottom:6px" id="br-state">—</div>
+        <div class="kv"><span class="k">连续 429</span><span class="v" id="br-429">—</span></div>
+        <div class="kv"><span class="k">累计触发</span><span class="v" id="br-trip">—</span></div>
+        <div class="kv"><span class="k">开启至</span><span class="v" id="br-until">—</span></div>
+        <button class="btn warn" id="br-reset" style="margin-top:12px;width:100%">重置所有熔断器</button>
+      </div>
+      <div class="card">
+        <h2>GCRA 平滑削峰</h2>
+        <div class="kv"><span class="k">稳态速率</span><span class="v" id="gc-rate">—</span></div>
+        <div class="kv"><span class="k">突发容量</span><span class="v" id="gc-cap">—</span></div>
+        <div class="kv"><span class="k">已放行</span><span class="v" id="gc-res">—</span></div>
+        <div class="kv"><span class="k">已延迟</span><span class="v" id="gc-del">—</span></div>
+      </div>
+      <div class="card">
+        <h2>请求处理开关</h2>
+        <div class="kv"><span class="k">请求头改写</span><span class="v" id="fp-on">—</span></div>
+        <div class="kv"><span class="k">起搏 GCRA</span><span class="v" id="fp-pace">—</span></div>
+        <div class="kv"><span class="k">对数正态抖动</span><span class="v" id="fp-jit">—</span></div>
+        <div class="kv"><span class="k">自适应熔断</span><span class="v" id="fp-brk">—</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h2>凭据隔离熔断状态（按客户端 x-api-key 隔离，带 LRU 上限）</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>凭据哈希 (SHA256前8字节)</th>
+            <th>脱敏 API Key</th>
+            <th>状态</th>
+            <th class="num">连续429</th>
+            <th class="num">累计请求</th>
+            <th class="num">操作</th>
+          </tr>
+        </thead>
+        <tbody id="brk-creds">
+          <tr><td colspan="6" class="empty">暂无活跃客户端凭据</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">401 仅锁死触发该状态的具体凭据，30分钟后自动转为 Half-Open 试探；不影响其他客户端。</p>
+    </div>
+
+    <div class="card">
+      <h2>内存池（零 GC 验证）</h2>
+      <div class="grid g2">
+        <div><div class="muted" style="font-size:12px">流式切片池 借/还</div><div style="font-size:18px;font-weight:700" id="pm-stream">—</div></div>
+        <div><div class="muted" style="font-size:12px">Buffer 池 借/还</div><div style="font-size:18px;font-weight:700" id="pm-buf">—</div></div>
+      </div>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">借出与归还计数接近即说明缓冲稳定回收、无堆泄漏。</p>
+    </div>
+  </section>
+
+  <!-- 运行参数页 (只读脱敏展示) -->
+  <section class="panel" id="p-params">
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card">
+        <h2>基础网络与接入</h2>
+        <div class="kv"><span class="k">本地监听地址</span><span class="v mono" id="cfg-listen">—</span></div>
+        <div class="kv"><span class="k">上游 API 端点</span><span class="v mono" id="cfg-upstream">—</span></div>
+        <div class="kv"><span class="k">代理全局 API Key</span><span class="v mono" id="cfg-key">—</span></div>
+        <div class="kv"><span class="k">入站安全令牌 (X-Proxy-Token)</span><span class="v mono" id="cfg-inbound">—</span></div>
+        <div class="kv"><span class="k">Claude 协议版本</span><span class="v mono" id="cfg-ver">—</span></div>
+        <div class="kv"><span class="k">运行时日志等级</span><span class="v" id="cfg-log">—</span></div>
+      </div>
+
+      <div class="card">
+        <h2>请求体与超时流控</h2>
+        <div class="kv"><span class="k">单个请求总超时上限 (timeout_seconds)</span><span class="v" id="cfg-timeout">—</span></div>
+        <div class="kv"><span class="k">流式响应首包后空闲超时</span><span class="v" id="cfg-stream-timeout">—</span></div>
+        <div class="kv"><span class="k">最大请求体限制 (max_body_mb)</span><span class="v" id="cfg-max-body">—</span></div>
+        <div class="kv"><span class="k">上游首字节响应头超时</span><span class="v" id="cfg-head-timeout">—</span></div>
+        <div class="kv"><span class="k">流式传输单块缓冲大小 (buffer_size_kb)</span><span class="v" id="cfg-buf-size">—</span></div>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>HTTP/2 连接池与后台预热</h2>
+        <div class="kv"><span class="k">全局最大空闲连接 (max_idle_conns)</span><span class="v" id="cfg-max-idle">—</span></div>
+        <div class="kv"><span class="k">单目标最大空闲连接 (max_idle_per_host)</span><span class="v" id="cfg-max-host">—</span></div>
+        <div class="kv"><span class="k">连接预热开关 (enable_warmup)</span><span class="v" id="cfg-warmup-on">—</span></div>
+        <div class="kv"><span class="k">预热心跳间隔</span><span class="v" id="cfg-warmup-interval">—</span></div>
+        <div class="kv"><span class="k">预热并发探针数</span><span class="v" id="cfg-warmup-concurr">—</span></div>
+        <div class="kv"><span class="k">心跳自适应暂停规则</span><span class="v">5分钟无请求自动挂起</span></div>
+      </div>
+
+      <div class="card">
+        <h2>防风控削峰与避风熔断</h2>
+        <div class="kv"><span class="k">指纹特征改写 (enable_fingerprint)</span><span class="v" id="cfg-fp-on">—</span></div>
+        <div class="kv"><span class="k">GCRA 削峰起搏 (enable_pacing)</span><span class="v" id="cfg-pace-on">—</span></div>
+        <div class="kv"><span class="k">稳态速率 / 突发容量</span><span class="v" id="cfg-rate">—</span></div>
+        <div class="kv"><span class="k">拟人化微抖动 (enable_jitter)</span><span class="v" id="cfg-jit-on">—</span></div>
+        <div class="kv"><span class="k">抖动区间 (中位数 / P95)</span><span class="v" id="cfg-jit-range">—</span></div>
+        <div class="kv"><span class="k">自适应凭据熔断器 (enable_circuit_breaker)</span><span class="v" id="cfg-breaker-on">—</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>WorkBuddy 国际版专属通道 (Case 2 适配)</h2>
+      <div class="grid g2">
+        <div>
+          <div class="kv"><span class="k">通道适配开关</span><span class="v" id="wb-enabled">—</span></div>
+          <div class="kv"><span class="k">运行模式</span><span class="v" id="wb-mode">—</span></div>
+          <div class="kv"><span class="k">内部通道标识</span><span class="v mono" id="wb-channel">—</span></div>
+        </div>
+        <div>
+          <div class="kv"><span class="k">Session Token</span><span class="v" id="wb-token">—</span></div>
+          <div class="kv"><span class="k">Cookie 凭据</span><span class="v" id="wb-cookie">—</span></div>
+          <div class="kv"><span class="k">载荷包装策略</span><span class="v" id="wb-wrap">—</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 日志 -->
+  <section class="panel" id="p-logs">
+    <div class="card">
+      <h2 style="display:flex;align-items:center">实时日志 <span class="muted" style="margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500" id="log-count"></span></h2>
+      <div class="logbox" id="logbox"><div class="empty" style="color:#8f9178">等待日志…</div></div>
+    </div>
+  </section>
+
+  <div class="foot">WorkBuddy International Edition · 管理接口仅本机可访问</div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const fmtBytes=n=>{n=+n||0;const u=['B','KB','MB','GB'];let i=0;while(n>=1024&&i<3){n/=1024;i++}return n.toFixed(i?1:0)+' '+u[i]};
+const fmtDur=s=>{s=+s||0;const d=s/86400|0,h=s%86400/3600|0,m=s%3600/60|0;if(d)return d+'天'+h+'时';if(h)return h+'时'+m+'分';if(m)return m+'分'+(s%60|0)+'秒';return (s|0)+'秒'};
+const esc=t=>(t||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const bool=(b,on='启用',off='关闭')=>b?`<span class="pill ok">${on}</span>`:`<span class="pill off">${off}</span>`;
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');$('#p-'+t.dataset.p).classList.add('on');
+});
+document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{
+  const el=$('#'+b.dataset.copy);navigator.clipboard?.writeText(el.textContent);
+  const o=b.textContent;b.textContent='已复制';setTimeout(()=>b.textContent=o,1200);
+});
+
+function stateClass(s){if(s==='Closed')return'ok';if(s==='Account-Blocked')return'bad';if(s==='Half-Open')return'warn';return'warn'}
+
+const modelTestResults = {};
+
+// 测试模型连通性
+async function testModel(modelId, btn){
+  const badgeId = 'badge-' + modelId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const badge = document.getElementById(badgeId);
+  if(badge){
+    badge.className = 'pill warn';
+    badge.textContent = '测试中…';
+  }
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/model/test', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Requested-With': 'fetch'},
+      body: JSON.stringify({model: modelId})
+    });
+    const d = await res.json();
+    btn.disabled = false;
+    modelTestResults[modelId] = d;
+    renderModelBadge(modelId, d);
+  }catch(e){
+    btn.disabled = false;
+    modelTestResults[modelId] = {status: 0, latency_ms: 0, err: true};
+    if(badge){
+      badge.className = 'pill bad';
+      badge.textContent = '测试失败';
+    }
+  }
+}
+
+function renderModelBadge(modelId, res){
+  const badgeId = 'badge-' + modelId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const badge = document.getElementById(badgeId);
+  if(!badge) return;
+  if(!res){
+    badge.className = 'pill off';
+    badge.textContent = '未测试';
+    return;
+  }
+  if(res.err){
+    badge.className = 'pill bad';
+    badge.textContent = '测试失败';
+  } else if(res.status >= 200 && res.status < 300){
+    badge.className = 'pill ok';
+    badge.textContent = `${res.status} OK · ${res.latency_ms}ms`;
+  } else {
+    badge.className = 'pill bad';
+    badge.textContent = `${res.status || 'ERR'} · ${res.latency_ms}ms`;
+  }
+}
+
+async function resetCredBreaker(key){
+  await fetch('/api/breaker/reset?key='+encodeURIComponent(key), {
+    method: 'POST',
+    headers: {'X-Requested-With': 'fetch'}
+  });
+  load();
+}
+
+async function load(){
+  let d;try{d=await (await fetch('/api/overview',{headers:{'X-Requested-With':'fetch'}})).json();}
+  catch(e){$('#runTxt').textContent='连接中断';$('#runDot').classList.add('stale');return;}
+  $('#runDot').classList.remove('stale');$('#runTxt').textContent='运行中';
+  $('#ver').textContent='v'+(d.version||'');
+  const s=d.stats||{};
+  $('#st-total').textContent=(s.total??0).toLocaleString();
+  $('#st-bytes').textContent='已转发 '+fmtBytes(s.bytes);
+  $('#st-err').textContent=s.errors??0;$('#st-err').className='n'+((s.errors>0)?' err':'');
+  const rate=s.total?(100*(s.total-s.errors)/s.total):100;
+  $('#st-rate').textContent='成功率 '+rate.toFixed(1)+'%';
+  $('#st-avg').textContent=Math.round(s.avg_ms||0)+' ms';
+  $('#ov-uptime').textContent=fmtDur(d.uptime_sec);
+  $('#ov-listen').textContent=d.listen_addr;$('#ov-upstream').textContent=d.upstream_url;
+  $('#ov-key').innerHTML=d.api_key_set?`<span class="pill ok">已配置</span> <span class="mono muted">${esc(d.masked_key)}</span>`:`<span class="pill off">透传客户端</span>`;
+  $('#ov-token').innerHTML=d.inbound_token_set?`<span class="pill ok">已启用</span> <span class="mono muted">${esc(d.masked_inbound_token)}</span>`:`<span class="pill off">未设置</span>`;
+  const wm=d.warmer;$('#ov-warm').innerHTML=d.warmup?`<span class="pill ok">启用</span>${wm?` <span class="muted">RTT ${wm.last_rtt_ms}ms · ${wm.success_count}/${wm.total_warmups}</span>`:''}`:bool(false);
+
+  const mb=$('#ov-models');const ms=s.by_model||[];
+  mb.innerHTML=ms.length?ms.map(m=>`<tr><td class="mono">${esc(m.model)}</td><td class="num">${m.requests}</td><td class="num${m.errors?' ':''}" style="${m.errors?'color:var(--red)':''}">${m.errors}</td><td class="num">${Math.round(m.avg_ms)}ms</td></tr>`).join(''):'<tr><td colspan="4" class="empty">暂无请求</td></tr>';
+  const rc=$('#ov-recent');const rr=s.recent||[];
+  rc.innerHTML=rr.length?rr.map(r=>{const c=r.status>=400||!r.status?'color:var(--red)':'color:var(--green)';return `<tr><td class="mono muted">${r.time}</td><td class="mono">${esc(r.path)}</td><td class="mono">${esc(r.model)}</td><td class="num" style="${c};font-weight:600">${r.status||'ERR'}</td><td class="num">${r.ms}ms</td></tr>`}).join(''):'<tr><td colspan="5" class="empty">暂无请求</td></tr>';
+
+  // 模型页：模型列表与测试按钮
+  const mdlList=$('#mdl-list');
+  const models=d.models||[];
+  if(models.length){
+    mdlList.innerHTML = models.map(m=>{
+      const safeId = m.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const tr = modelTestResults[m.id];
+      let badgeClass = 'pill off';
+      let badgeText = '未测试';
+      if(tr){
+        if(tr.err){ badgeClass = 'pill bad'; badgeText = '测试失败'; }
+        else if(tr.status >= 200 && tr.status < 300){ badgeClass = 'pill ok'; badgeText = `${tr.status} OK · ${tr.latency_ms}ms`; }
+        else { badgeClass = 'pill bad'; badgeText = `${tr.status || 'ERR'} · ${tr.latency_ms}ms`; }
+      }
+      return `<tr>
+        <td class="mono"><strong>${esc(m.id)}</strong></td>
+        <td>${esc(m.display_name||m.id)}</td>
+        <td class="num">
+          <span class="${badgeClass}" id="badge-${safeId}">${badgeText}</span>
+          <button class="btn sm" style="margin-left:8px" onclick="testModel('${esc(m.id)}', this)">测试</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } else {
+    mdlList.innerHTML = '<tr><td colspan="3" class="empty">暂无可用模型</td></tr>';
+  }
+
+  $('#cc-base').textContent='http://'+d.listen_addr;
+  $('#cc-env').textContent=`export ANTHROPIC_BASE_URL="http://${d.listen_addr}"  ANTHROPIC_AUTH_TOKEN="local-proxy"`;
+  const map=d.model_mapping||{};const mm=$('#mdl-map');const keys=Object.keys(map);
+  mm.innerHTML=keys.length?keys.map(k=>`<tr><td class="mono">${esc(k)}</td><td class="mono muted">${esc(map[k])}</td></tr>`).join(''):'<tr><td colspan="2" class="empty">未配置映射，原样透传</td></tr>';
+
+  // 防风控与凭据隔离熔断表
+  const b=d.breaker;
+  if(b){$('#br-state').innerHTML=`<span class="pill ${stateClass(b.state)}">${b.state}</span>`;
+    $('#br-429').textContent=b.consecutive_429??0;$('#br-trip').textContent=b.total_tripped??0;
+    $('#br-until').textContent=(b.open_until&&!b.open_until.includes('0001-01-01'))?b.open_until:'—';}
+  else $('#br-state').innerHTML=bool(false);
+  const g=d.gcra;
+  if(g){$('#gc-rate').textContent=(g.rate_per_sec||0).toFixed(1)+' req/s';$('#gc-cap').textContent=g.capacity;
+    $('#gc-res').textContent=(g.total_reserved||0).toLocaleString();$('#gc-del').textContent=(g.total_delayed||0).toLocaleString();}
+  $('#fp-on').innerHTML=bool(d.fingerprint);$('#fp-pace').innerHTML=bool(d.pacing);$('#fp-jit').innerHTML=bool(d.jitter);$('#fp-brk').innerHTML=bool(d.breaker_on);
+  const pm=d.pool_metrics||{};
+  $('#pm-stream').textContent=`${(pm.stream_gets||0).toLocaleString()} / ${(pm.stream_puts||0).toLocaleString()}`;
+  $('#pm-buf').textContent=`${(pm.buffer_gets||0).toLocaleString()} / ${(pm.buffer_puts||0).toLocaleString()}`;
+
+  const brkCreds = $('#brk-creds');
+  const breakers = d.breakers || [];
+  if(breakers.length){
+    brkCreds.innerHTML = breakers.map(c=>`<tr>
+      <td class="mono muted">${esc(c.key)}</td>
+      <td class="mono">${esc(c.masked_key)}</td>
+      <td><span class="pill ${stateClass(c.state)}">${c.state}</span></td>
+      <td class="num">${c.consecutive_429}</td>
+      <td class="num">${(c.total_requests||0).toLocaleString()}</td>
+      <td class="num"><button class="btn sm warn" onclick="resetCredBreaker('${esc(c.key)}')">重置</button></td>
+    </tr>`).join('');
+  } else {
+    brkCreds.innerHTML = '<tr><td colspan="6" class="empty">暂无活跃客户端凭据</td></tr>';
+  }
+
+  // 运行参数只读展示
+  const c = d.config || {};
+  $('#cfg-listen').textContent = c.listen_addr || d.listen_addr;
+  $('#cfg-upstream').textContent = c.upstream_url || d.upstream_url;
+  $('#cfg-key').innerHTML = c.api_key_set ? `<span class="pill ok">已配置</span> ${esc(c.masked_key)}` : `<span class="pill off">透传客户端</span>`;
+  $('#cfg-inbound').innerHTML = c.inbound_token_set ? `<span class="pill ok">已启用</span> ${esc(c.masked_inbound_token)}` : `<span class="pill off">未启用</span>`;
+  $('#cfg-ver').textContent = c.claude_code_version || '2.1.306';
+  $('#cfg-log').innerHTML = `<span class="pill ok">${esc(c.log_level||'info').toUpperCase()}</span>`;
+  $('#cfg-timeout').textContent = (c.timeout_seconds || 180) + ' 秒';
+  $('#cfg-stream-timeout').textContent = (c.timeout_seconds || 180) + ' 秒 (无数据)';
+  $('#cfg-max-body').textContent = (c.max_body_mb || 32) + ' MB';
+  $('#cfg-head-timeout').textContent = (c.response_header_timeout || 60) + ' 秒';
+  $('#cfg-buf-size').textContent = (c.buffer_size_kb || 32) + ' KB';
+  $('#cfg-max-idle').textContent = c.max_idle_conns || 200;
+  $('#cfg-max-host').textContent = c.max_idle_conns_per_host || 50;
+  $('#cfg-warmup-on').innerHTML = bool(c.enable_warmup);
+  $('#cfg-warmup-interval').textContent = (c.warmup_interval_seconds || 30) + ' 秒';
+  $('#cfg-warmup-concurr').textContent = c.warmup_concurrency || 2;
+  $('#cfg-fp-on').innerHTML = bool(c.enable_fingerprint);
+  $('#cfg-pace-on').innerHTML = bool(c.enable_pacing);
+  $('#cfg-rate').textContent = `${(c.rate_per_sec||2).toFixed(1)} req/s / ${c.burst_capacity||5}`;
+  $('#cfg-jit-on').innerHTML = bool(c.enable_jitter);
+  $('#cfg-jit-range').textContent = `中位 ${c.jitter_median_ms||300}ms / P95 ${c.jitter_p95_ms||650}ms`;
+  $('#cfg-breaker-on').innerHTML = bool(c.enable_circuit_breaker);
+
+  const wb = d.workbuddy_adapter || {};
+  if($('#wb-enabled')){
+    $('#wb-enabled').innerHTML = bool(wb.enabled);
+    $('#wb-mode').innerHTML = `<span class="pill ok">${esc(wb.mode || 'workbuddy')}</span>`;
+    $('#wb-channel').textContent = wb.channel_id || 'intl-desktop-v2';
+    $('#wb-token').innerHTML = wb.session_token_set ? `<span class="pill ok">已配置</span> ${esc(wb.masked_session_token)}` : `<span class="pill off">未配置</span>`;
+    $('#wb-cookie').innerHTML = wb.cookie_set ? `<span class="pill ok">已配置</span> ${esc(wb.masked_cookie)}` : `<span class="pill off">未配置</span>`;
+    $('#wb-wrap').textContent = wb.wrap_mode || 'inject';
+  }
+}
+
+$('#br-reset').onclick=async()=>{
+  await fetch('/api/breaker/reset',{method:'POST',headers:{'X-Requested-With':'fetch'}});
+  load();
+};
+
+let logSeq=0;
+async function loadLogs(){
+  let d;try{d=await (await fetch('/api/logs?since='+logSeq,{headers:{'X-Requested-With':'fetch'}})).json();}catch(e){return;}
+  const box=$('#logbox');const lines=d.lines||[];
+  if(lines.length){
+    if(logSeq===0)box.innerHTML='';
+    for(const l of lines){
+      logSeq=l.seq;const div=document.createElement('div');div.className='l';
+      div.innerHTML=`<span class="t">${l.time}</span>${esc(l.text)}`;box.appendChild(div);
+    }
+    while(box.children.length>500)box.removeChild(box.firstChild);
+    box.scrollTop=box.scrollHeight;$('#log-count').textContent=logSeq+' 行';
+  }
+}
+
+load();loadLogs();
+setInterval(load,3000);setInterval(loadLogs,2000);
+</script>
+</body>
+</html>
